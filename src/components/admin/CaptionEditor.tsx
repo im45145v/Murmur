@@ -1,4 +1,5 @@
 'use client'
+import { useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import type { Submission } from '@/lib/types'
 
@@ -13,9 +14,17 @@ interface Props {
 }
 
 export default function CaptionEditor({ submission }: Props) {
-  const captions = useStore((s) => s.captions.filter((c) => c.submissionId === submission.id))
+  const allCaptions = useStore((s) => s.captions)
+  const captions = useMemo(() => allCaptions.filter((c) => c.submissionId === submission.id), [allCaptions, submission.id])
   const generateCaptionsForSubmission = useStore((s) => s.generateCaptionsForSubmission)
   const selectCaption = useStore((s) => s.selectCaption)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const handleCopy = async (text: string, id: string) => {
+    await navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   return (
     <div className="bg-white rounded-xl border p-5 space-y-4">
@@ -45,9 +54,17 @@ export default function CaptionEditor({ submission }: Props) {
             >
               <p className="text-xs font-semibold text-gray-500 mb-1.5">{styleLabels[caption.style] ?? caption.style}</p>
               <p className="text-sm text-gray-700 whitespace-pre-wrap">{caption.text}</p>
-              {submission.captionSelected === caption.id && (
-                <p className="text-xs text-indigo-600 font-medium mt-2">✓ Selected</p>
-              )}
+              <div className="flex items-center justify-between mt-2">
+                {submission.captionSelected === caption.id && (
+                  <p className="text-xs text-indigo-600 font-medium">✓ Selected</p>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(caption.text, caption.id) }}
+                  className="text-xs text-gray-400 hover:text-gray-600 ml-auto"
+                >
+                  {copiedId === caption.id ? '✓ Copied!' : '📋 Copy'}
+                </button>
+              </div>
             </div>
           ))}
         </div>

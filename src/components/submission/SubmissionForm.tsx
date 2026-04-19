@@ -17,6 +17,9 @@ const schema = z.object({
   targetName: z.string().min(1, 'Required').max(100),
   targetProgram: z.enum(['IPM', 'MBA', 'MBA-HR', 'MBA-BA', 'PhD', 'Prof.', "Don't know", 'Other'] as const),
   targetBatch: z.enum(['2025', '2026', '2027', '2028', '2029', "Don't know", 'Other'] as const),
+  fromInitials: z.string().max(5, 'Max 5 characters').optional().or(z.literal('')),
+  toInitials: z.string().max(5, 'Max 5 characters').optional().or(z.literal('')),
+  preferredTemplateId: z.string().optional().or(z.literal('')),
   category: z.enum(['Confession', 'Gossip', 'Frustration', 'Horror Story / Weird Experiences', 'Good/Bad Experiences', 'Advice', 'Feedback', 'Other'] as const),
   bodyText: z.string().min(20, 'At least 20 characters').max(1000, 'Max 1000 characters'),
   triggerFlag: z.enum(['Yes', 'No', 'Maybe'] as const),
@@ -32,6 +35,8 @@ interface Props {
 
 export default function SubmissionForm({ onSuccess }: Props) {
   const addSubmission = useStore((s) => s.addSubmission)
+  const templates = useStore((s) => s.templates)
+  const enabledTemplates = templates.filter((t) => t.isEnabled)
   const [hasDraft, setHasDraft] = useState(false)
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
@@ -63,15 +68,15 @@ export default function SubmissionForm({ onSuccess }: Props) {
     }
   }, [setValue])
 
+  const watchedValues = watch()
   useEffect(() => {
-    const sub = watch()
     const timer = setTimeout(() => {
-      if (sub.bodyText && sub.bodyText.length > 5) {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(sub))
+      if (watchedValues.bodyText && watchedValues.bodyText.length > 5) {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify(watchedValues))
       }
     }, 1000)
     return () => clearTimeout(timer)
-  })
+  }, [watchedValues])
 
   const clearDraft = () => {
     localStorage.removeItem(DRAFT_KEY)
@@ -87,6 +92,9 @@ export default function SubmissionForm({ onSuccess }: Props) {
       targetName: data.targetName,
       targetProgram: data.targetProgram,
       targetBatch: data.targetBatch,
+      fromInitials: data.fromInitials || undefined,
+      toInitials: data.toInitials || undefined,
+      preferredTemplateId: data.preferredTemplateId || undefined,
       category: data.category,
       bodyText: data.bodyText,
       triggerFlag: data.triggerFlag,
@@ -118,6 +126,30 @@ export default function SubmissionForm({ onSuccess }: Props) {
             <select {...register('submitterBatch')} className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
               {BATCHES.map(b => <option key={b} value={b} className="bg-slate-800">{b}</option>)}
             </select>
+          </div>
+        </div>
+
+        {/* From / To initials */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-indigo-200 text-xs mb-1.5 font-medium">From (initials, optional)</label>
+            <input
+              {...register('fromInitials')}
+              placeholder="e.g. A.K."
+              maxLength={5}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {errors.fromInitials && <p className="text-red-400 text-xs mt-1">{errors.fromInitials.message}</p>}
+          </div>
+          <div>
+            <label className="block text-indigo-200 text-xs mb-1.5 font-medium">To (initials, optional)</label>
+            <input
+              {...register('toInitials')}
+              placeholder="e.g. R.S."
+              maxLength={5}
+              className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            {errors.toInitials && <p className="text-red-400 text-xs mt-1">{errors.toInitials.message}</p>}
           </div>
         </div>
 
@@ -180,6 +212,27 @@ export default function SubmissionForm({ onSuccess }: Props) {
               <label key={f} className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" value={f} {...register('triggerFlag')} className="accent-indigo-500" />
                 <span className="text-white/80 text-sm">{f}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Template preference */}
+        <div>
+          <label className="block text-indigo-200 text-xs mb-1.5 font-medium">Preferred Design (optional)</label>
+          <div className="grid grid-cols-3 gap-2">
+            <label className="cursor-pointer">
+              <input type="radio" value="" {...register('preferredTemplateId')} className="sr-only peer" />
+              <div className="peer-checked:ring-2 peer-checked:ring-indigo-400 bg-white/10 border border-white/20 rounded-lg p-2.5 text-center transition-all hover:bg-white/15">
+                <span className="text-white/60 text-xs">🎲 Surprise me</span>
+              </div>
+            </label>
+            {enabledTemplates.map(t => (
+              <label key={t.id} className="cursor-pointer">
+                <input type="radio" value={t.id} {...register('preferredTemplateId')} className="sr-only peer" />
+                <div className={`peer-checked:ring-2 peer-checked:ring-indigo-400 ${t.thumbnailClass} border border-white/20 rounded-lg p-2.5 text-center transition-all hover:opacity-90`}>
+                  <span className="text-xs font-medium text-slate-800">{t.name}</span>
+                </div>
               </label>
             ))}
           </div>

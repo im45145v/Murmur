@@ -1,4 +1,5 @@
 'use client'
+import { useMemo } from 'react'
 import { useStore } from '@/lib/store'
 import type { Submission } from '@/lib/types'
 
@@ -7,13 +8,21 @@ interface Props {
 }
 
 export default function TemplateSelector({ submission }: Props) {
-  const templates = useStore((s) => s.templates.filter((t) => t.isEnabled))
+  const allTemplates = useStore((s) => s.templates)
+  const templates = useMemo(() => allTemplates.filter((t) => t.isEnabled), [allTemplates])
   const setSubmissionTemplate = useStore((s) => s.setSubmissionTemplate)
   const selectedTemplateId = submission.templateId
 
   return (
     <div className="bg-white rounded-xl border p-5 space-y-4">
-      <h3 className="font-semibold text-gray-900">Template</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-gray-900">Template</h3>
+        {submission.preferredTemplateId && (
+          <span className="text-xs bg-violet-50 text-violet-600 px-2.5 py-1 rounded-full font-medium">
+            User preferred: {submission.preferredTemplateId}
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-3 gap-3">
         {templates.map((template) => {
           const selectedTheme = template.themes.find((t) => t.id === template.defaultTheme)

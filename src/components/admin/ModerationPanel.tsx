@@ -29,7 +29,7 @@ interface Props {
 export default function ModerationPanel({ submission }: Props) {
   const updateSubmission = useStore((s) => s.updateSubmission)
 
-  const applyTransform = (fn: (t: string) => string, label: string) => {
+  const applyTransform = (fn: (t: string) => string) => {
     const current = submission.editedText ?? submission.bodyText
     const transformed = fn(current)
     updateSubmission(submission.id, { editedText: transformed })
@@ -69,25 +69,25 @@ export default function ModerationPanel({ submission }: Props) {
         <p className="text-xs font-semibold text-gray-600 mb-2">Quick Actions</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => applyTransform(fixGrammar, 'grammar_fixed')}
+            onClick={() => applyTransform(fixGrammar)}
             className="px-3 py-1.5 text-xs bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 border border-blue-200"
           >
             Fix Grammar
           </button>
           <button
-            onClick={() => applyTransform(softenPhrasing, 'softened')}
+            onClick={() => applyTransform(softenPhrasing)}
             className="px-3 py-1.5 text-xs bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 border border-purple-200"
           >
             Soften Phrasing
           </button>
           <button
-            onClick={() => applyTransform(removeIdentifyingDetails, 'edited')}
+            onClick={() => applyTransform(removeIdentifyingDetails)}
             className="px-3 py-1.5 text-xs bg-orange-50 text-orange-700 rounded-lg hover:bg-orange-100 border border-orange-200"
           >
             Remove Identifiers
           </button>
           <button
-            onClick={() => applyTransform(reduceRisk, 'rewritten')}
+            onClick={() => applyTransform(reduceRisk)}
             className="px-3 py-1.5 text-xs bg-red-50 text-red-700 rounded-lg hover:bg-red-100 border border-red-200"
           >
             Reduce Risk

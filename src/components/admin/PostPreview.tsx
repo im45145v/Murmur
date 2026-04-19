@@ -1,9 +1,10 @@
 'use client'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { Submission } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { getTemplateComponent, getDefaultTemplateId } from '@/components/templates'
-import { Download, RefreshCw } from 'lucide-react'
+import { Download, RefreshCw, Type } from 'lucide-react'
+import { FONT_OPTIONS, getFontFamily, getDefaultFontForTemplate } from '@/lib/fonts'
 
 interface Props {
   submission: Submission
@@ -14,16 +15,20 @@ export default function PostPreview({ submission }: Props) {
   const settings = useStore((s) => s.settings)
   const addGeneratedPost = useStore((s) => s.addGeneratedPost)
   const markPostDownloaded = useStore((s) => s.markPostDownloaded)
-  const captions = useStore((s) => s.captions.filter((c) => c.submissionId === submission.id))
+  const allCaptions = useStore((s) => s.captions)
+  const captions = useMemo(() => allCaptions.filter((c) => c.submissionId === submission.id), [allCaptions, submission.id])
 
   const previewRef = useRef<HTMLDivElement>(null)
   const [downloading, setDownloading] = useState(false)
   const [selectedThemeId, setSelectedThemeId] = useState<string | null>(null)
+  const [selectedFontId, setSelectedFontId] = useState<string | null>(null)
 
-  const templateId = submission.templateId ?? getDefaultTemplateId(submission, templates)
+  const templateId = submission.templateId ?? submission.preferredTemplateId ?? getDefaultTemplateId(submission, templates)
   const template = templates.find((t) => t.id === templateId) ?? templates[0]
   const themeId = selectedThemeId ?? template?.defaultTheme ?? template?.themes[0]?.id
   const theme = template?.themes.find((t) => t.id === themeId) ?? template?.themes[0]
+  const fontId = selectedFontId ?? getDefaultFontForTemplate(templateId)
+  const fontFamily = getFontFamily(fontId)
 
   if (!template || !theme) return null
 
@@ -40,9 +45,6 @@ export default function PostPreview({ submission }: Props) {
         backgroundColor: null,
       })
       const dataUrl = canvas.toDataURL('image/png')
-
-      const selectedCaption = captions.find((c) => c.id === submission.captionSelected)
-      void selectedCaption
 
       addGeneratedPost({
         submissionId: submission.id,
@@ -82,6 +84,25 @@ export default function PostPreview({ submission }: Props) {
         </div>
       </div>
 
+      {/* Font chooser */}
+      <div className="flex items-center gap-2">
+        <Type className="w-3.5 h-3.5 text-gray-400" />
+        <div className="flex gap-1.5 flex-wrap">
+          {FONT_OPTIONS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setSelectedFontId(f.id)}
+              className={`px-2.5 py-1 text-xs rounded-lg border transition-all ${
+                fontId === f.id ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300'
+              }`}
+              style={{ fontFamily: f.family }}
+            >
+              {f.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex justify-center">
         <div ref={previewRef} style={{ display: 'inline-block' }}>
           <TemplateComponent
@@ -89,6 +110,7 @@ export default function PostPreview({ submission }: Props) {
             theme={theme}
             previewMode={true}
             footerSignature={settings.footerSignatureFormat}
+            fontFamily={fontFamily}
           />
         </div>
       </div>

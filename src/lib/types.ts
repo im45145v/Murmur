@@ -21,6 +21,9 @@ export interface Submission {
   targetName: string
   targetProgram: Program
   targetBatch: Batch
+  fromInitials?: string
+  toInitials?: string
+  preferredTemplateId?: string
   category: PostCategory
   bodyText: string
   editedText?: string
@@ -99,4 +102,13 @@ export interface AppSettings {
   exportImageSize: number
   watermarkEnabled: boolean
   footerSignatureFormat: string
+}
+
+export type FontId = 'cursive' | 'serif' | 'monospace' | 'sans' | 'display' | 'handwritten'
+
+export interface FontOption {
+  id: FontId
+  name: string
+  family: string
+  preview: string
 }
