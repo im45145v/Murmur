@@ -4,6 +4,11 @@ import TopBar from '@/components/admin/TopBar'
 import { useState } from 'react'
 import type { RiskLevel } from '@/lib/types'
 
+function parseNumberOrFallback(value: string, fallback: number): number {
+  const parsed = Number.parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
 export default function SettingsPage() {
   const settings = useStore((s) => s.settings)
   const updateSettings = useStore((s) => s.updateSettings)
@@ -52,7 +57,9 @@ export default function SettingsPage() {
             type="number"
             className="w-full border rounded-lg px-3 py-2 text-sm"
             value={settings.maxCharacterLength}
-            onChange={(e) => updateSettings({ maxCharacterLength: parseInt(e.target.value) })}
+            onChange={(e) => updateSettings({
+              maxCharacterLength: parseNumberOrFallback(e.target.value, settings.maxCharacterLength),
+            })}
           />
         </div>
         <div className="p-4 space-y-1">
@@ -61,7 +68,9 @@ export default function SettingsPage() {
             type="number"
             className="w-full border rounded-lg px-3 py-2 text-sm"
             value={settings.exportImageSize}
-            onChange={(e) => updateSettings({ exportImageSize: parseInt(e.target.value) })}
+            onChange={(e) => updateSettings({
+              exportImageSize: parseNumberOrFallback(e.target.value, settings.exportImageSize),
+            })}
           />
         </div>
         <div className="p-4 flex items-center justify-between">

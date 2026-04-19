@@ -38,6 +38,7 @@ export default function SubmissionForm({ onSuccess }: Props) {
   const templates = useStore((s) => s.templates)
   const enabledTemplates = templates.filter((t) => t.isEnabled)
   const [hasDraft, setHasDraft] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -85,22 +86,27 @@ export default function SubmissionForm({ onSuccess }: Props) {
   }
 
   const onSubmit = async (data: FormValues) => {
-    const id = addSubmission({
-      submitterName: 'Anonymous',
-      submitterProgram: data.submitterProgram,
-      submitterBatch: data.submitterBatch,
-      targetName: data.targetName,
-      targetProgram: data.targetProgram,
-      targetBatch: data.targetBatch,
-      fromInitials: data.fromInitials || undefined,
-      toInitials: data.toInitials || undefined,
-      preferredTemplateId: data.preferredTemplateId || undefined,
-      category: data.category,
-      bodyText: data.bodyText,
-      triggerFlag: data.triggerFlag,
-    })
-    localStorage.removeItem(DRAFT_KEY)
-    onSuccess(id)
+    setSubmitError(null)
+    try {
+      const id = await addSubmission({
+        submitterName: 'Anonymous',
+        submitterProgram: data.submitterProgram,
+        submitterBatch: data.submitterBatch,
+        targetName: data.targetName,
+        targetProgram: data.targetProgram,
+        targetBatch: data.targetBatch,
+        fromInitials: data.fromInitials || undefined,
+        toInitials: data.toInitials || undefined,
+        preferredTemplateId: data.preferredTemplateId || undefined,
+        category: data.category,
+        bodyText: data.bodyText,
+        triggerFlag: data.triggerFlag,
+      })
+      localStorage.removeItem(DRAFT_KEY)
+      onSuccess(id)
+    } catch {
+      setSubmitError('Failed to submit. Please check your connection and try again.')
+    }
   }
 
   return (
@@ -113,6 +119,11 @@ export default function SubmissionForm({ onSuccess }: Props) {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {submitError && (
+          <div className="bg-red-500/20 border border-red-400/30 rounded-lg px-4 py-3">
+            <p className="text-red-200 text-sm">{submitError}</p>
+          </div>
+        )}
         {/* Submitter info */}
         <div className="grid grid-cols-2 gap-3">
           <div>

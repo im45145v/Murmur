@@ -10,7 +10,7 @@ Murmur replaces the manual Google Form → Canva → Instagram workflow with a p
 
 - **Public submission form** — anonymous, mobile-friendly, with draft autosave and character count
 - **Admin moderation dashboard** — queue, detail view, inline editing, risk scoring
-- **6 Instagram-ready post templates** — Scrapbook, Bold Card, Journal, Handwritten, Framed Note, Confession
+- **12 Instagram-ready post templates** — Scrapbook, Bold Card, Journal, Handwritten, Framed Note, Confession, Polaroid, Neon Glow, Gradient Wave, Minimal Quote, Retro Vintage, Chalkboard
 - **Smart text fitting** — font size adapts automatically to submission length
 - **Caption suggestions** — 3 styles generated per submission (soft reflective, neutral, brand voice)
 - **Moderation helpers** — heuristic risk analysis with soften/reduce/grammar tools
@@ -47,7 +47,7 @@ src/
   components/
     submission/               # Public form components
     admin/                    # Admin dashboard components
-    templates/                # 6 post template renderers
+    templates/                # 12 post template renderers
     charts/                   # Recharts wrappers
     ui/                       # Reusable design system primitives
   lib/
@@ -92,7 +92,7 @@ To add cloud image storage (for PNG exports):
 
 ## 🛠 Tech Stack
 
-- **Next.js 14** (App Router)
+- **Next.js 16** (App Router)
 - **TypeScript** (strict)
 - **Tailwind CSS**
 - **Zustand** — state management

@@ -1,5 +1,7 @@
 'use client'
 import { useMemo, useRef, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import { flushSync } from 'react-dom'
 import type { Submission } from '@/lib/types'
 import { useStore } from '@/lib/store'
 import { getTemplateComponent, getDefaultTemplateId } from '@/components/templates'
@@ -35,15 +37,44 @@ export default function PostPreview({ submission }: Props) {
   const TemplateComponent = getTemplateComponent(templateId)
 
   const handleDownload = async () => {
-    if (!previewRef.current) return
     setDownloading(true)
     try {
       const html2canvas = (await import('html2canvas')).default
-      const canvas = await html2canvas(previewRef.current, {
-        scale: 2,
+
+      // Render the template at full 1080px size off-screen so
+      // html2canvas captures pixel-perfect text placement.
+      const offscreen = document.createElement('div')
+      offscreen.style.position = 'fixed'
+      offscreen.style.left = '-9999px'
+      offscreen.style.top = '0'
+      document.body.appendChild(offscreen)
+
+      const root = createRoot(offscreen)
+      flushSync(() => {
+        root.render(
+          <TemplateComponent
+            submission={submission}
+            theme={theme}
+            previewMode={false}
+            footerSignature={settings.footerSignatureFormat}
+            fontFamily={fontFamily}
+          />
+        )
+      })
+
+      // Small delay for fonts / paint
+      await new Promise((r) => setTimeout(r, 100))
+
+      const target = offscreen.firstElementChild as HTMLElement
+      const canvas = await html2canvas(target, {
+        scale: 1,
         useCORS: true,
         backgroundColor: null,
       })
+
+      root.unmount()
+      document.body.removeChild(offscreen)
+
       const dataUrl = canvas.toDataURL('image/png')
 
       addGeneratedPost({
