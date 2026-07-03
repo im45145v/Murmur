@@ -3,12 +3,17 @@ import { connectDB } from '@/lib/mongodb'
 import { CaptionModel } from '@/lib/models'
 import { SubmissionModel } from '@/lib/models'
 import { generateCaptions } from '@/lib/caption-generator'
+import { isApiResponse, requireAdmin } from '@/lib/server/api-auth'
+import { recordAdminAction } from '@/lib/server/audit'
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(request)
+    if (isApiResponse(admin)) return admin
+
     await connectDB()
     const { id } = await params
     const captions = await CaptionModel.find({ submissionId: id }).lean()
@@ -20,10 +25,13 @@ export async function GET(
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const admin = await requireAdmin(request)
+    if (isApiResponse(admin)) return admin
+
     await connectDB()
     const { id } = await params
 
@@ -40,6 +48,14 @@ export async function POST(
 
     // Save to DB
     await CaptionModel.insertMany(newCaptions)
+    await recordAdminAction({
+      adminId: admin.sub,
+      submissionId: id,
+      action: 'caption_selected',
+      targetType: 'caption',
+      targetId: id,
+      metadata: { generated: newCaptions.length },
+    })
 
     return NextResponse.json(newCaptions, { status: 201 })
   } catch (error) {

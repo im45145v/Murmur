@@ -100,3 +100,13 @@ To add cloud image storage (for PNG exports):
 - **Recharts** — analytics charts
 - **Lucide React** — icons
 - **html2canvas** — PNG export
+
+---
+
+## Instagram Publishing & Deployment
+
+The production publishing flow uses official Instagram API publishing, Cloudflare R2 public image URLs, and MongoDB metadata. Browser automation is intentionally not used.
+
+- Instagram/R2 setup: `docs/instagram-publishing.md`
+- Render-style deployment: `docs/deployment-render.md`
+- Environment template: `.env.example`
