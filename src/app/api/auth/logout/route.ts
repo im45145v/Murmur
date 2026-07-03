@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
+import { ADMIN_COOKIE_NAME } from '@/lib/server/admin-session'
 
 export async function POST() {
   const response = NextResponse.json({ success: true })
-  response.cookies.set('murmur-admin-token', '', {
+  response.cookies.set(ADMIN_COOKIE_NAME, '', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

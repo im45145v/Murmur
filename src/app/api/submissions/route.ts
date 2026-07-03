@@ -3,9 +3,14 @@ import { connectDB } from '@/lib/mongodb'
 import { SubmissionModel } from '@/lib/models'
 import { analyzeRisk } from '@/lib/moderation'
 import { generateId } from '@/lib/utils'
+import { isApiResponse, requireAdmin, validationError } from '@/lib/server/api-auth'
+import { PublicSubmissionCreateSchema } from '@/lib/server/validation'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const admin = await requireAdmin(request)
+    if (isApiResponse(admin)) return admin
+
     await connectDB()
     const submissions = await SubmissionModel.find().sort({ createdAt: -1 }).lean()
     return NextResponse.json(submissions)
@@ -18,25 +23,18 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB()
-    const data = await request.json()
+    const parsed = PublicSubmissionCreateSchema.safeParse(await request.json())
+    if (!parsed.success) return validationError(parsed.error.flatten())
 
-    // If client already computed moderation, use it; otherwise compute server-side
-    let riskLevel = data.riskLevel
-    let moderationFlags = data.moderationFlags
-    if (!riskLevel || !moderationFlags) {
-      const result = analyzeRisk(data.bodyText, data.triggerFlag)
-      riskLevel = result.riskLevel
-      moderationFlags = result.flags
-    }
-
-    const id = data.id || generateId()
+    const data = parsed.data
+    const { riskLevel, flags: moderationFlags } = analyzeRisk(data.bodyText, data.triggerFlag)
 
     const submission = await SubmissionModel.create({
       ...data,
-      id,
+      id: generateId(),
       riskLevel,
       moderationFlags,
-      status: data.status || 'pending',
+      status: 'pending',
     })
 
     return NextResponse.json(submission, { status: 201 })

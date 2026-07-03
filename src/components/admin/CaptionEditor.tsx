@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useStore } from '@/lib/store'
 import type { Submission } from '@/lib/types'
 
@@ -16,9 +16,14 @@ interface Props {
 export default function CaptionEditor({ submission }: Props) {
   const allCaptions = useStore((s) => s.captions)
   const captions = useMemo(() => allCaptions.filter((c) => c.submissionId === submission.id), [allCaptions, submission.id])
+  const fetchCaptionsForSubmission = useStore((s) => s.fetchCaptionsForSubmission)
   const generateCaptionsForSubmission = useStore((s) => s.generateCaptionsForSubmission)
   const selectCaption = useStore((s) => s.selectCaption)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchCaptionsForSubmission(submission.id)
+  }, [fetchCaptionsForSubmission, submission.id])
 
   const handleCopy = async (text: string, id: string) => {
     await navigator.clipboard.writeText(text)

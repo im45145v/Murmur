@@ -4,6 +4,7 @@ export type PostCategory = 'Confession' | 'Gossip' | 'Frustration' | 'Horror Sto
 export type TriggerFlag = 'Yes' | 'No' | 'Maybe'
 export type RiskLevel = 'Low' | 'Medium' | 'High' | 'Critical'
 export type SubmissionStatus = 'pending' | 'approved' | 'rejected' | 'draft' | 'posted'
+export type PublishStatus = 'draft' | 'rendered' | 'queued' | 'publishing' | 'published' | 'failed' | 'manual'
 
 export interface ModerationFlag {
   id: string
@@ -78,18 +79,69 @@ export interface GeneratedPost {
   templateId: string
   themeId: string
   captionId: string
+  captionText?: string
+  assetUrl?: string
+  assetKey?: string
+  mimeType?: string
+  width?: number
+  height?: number
+  byteSize?: number
+  checksum?: string
+  rendererVersion?: string
+  publishStatus: PublishStatus
+  instagramContainerId?: string
+  instagramMediaId?: string
+  publishError?: string
+  publishedAt?: Date
+  manualPublishedAt?: Date
   imageDataUrl?: string
   createdAt: Date
   downloadedAt?: Date
 }
 
+export interface InstagramConnection {
+  key: 'primary'
+  instagramUserId: string
+  username: string
+  accountType?: string
+  accessToken: string
+  tokenType?: string
+  expiresAt?: Date
+  scopes: string[]
+  status: 'connected' | 'expired' | 'error'
+  lastRefreshedAt?: Date
+  lastPublishAt?: Date
+  lastError?: string
+  createdAt?: Date
+  updatedAt?: Date
+}
+
 export interface AdminAction {
   id: string
-  submissionId: string
+  submissionId?: string
   adminId: string
-  action: 'approved' | 'rejected' | 'edited' | 'rewritten' | 'grammar_fixed' | 'softened' | 'downloaded' | 'posted' | 'template_changed' | 'caption_selected'
+  action:
+    | 'approved'
+    | 'rejected'
+    | 'edited'
+    | 'rewritten'
+    | 'grammar_fixed'
+    | 'softened'
+    | 'downloaded'
+    | 'posted'
+    | 'template_changed'
+    | 'caption_selected'
+    | 'rendered'
+    | 'instagram_connected'
+    | 'instagram_refreshed'
+    | 'instagram_published'
+    | 'instagram_publish_failed'
+    | 'manual_published'
   previousValue?: string
   newValue?: string
+  targetType?: string
+  targetId?: string
+  metadata?: Record<string, unknown>
   timestamp: Date
 }
 

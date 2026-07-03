@@ -1,14 +1,26 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { ADMIN_COOKIE_NAME, verifyAdminSessionToken } from './lib/server/admin-session'
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
-    const token = request.cookies.get('murmur-admin-token')?.value
-    const secret = process.env.ADMIN_SESSION_SECRET
+  const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')
+  const isProtectedApi =
+    pathname.startsWith('/api/settings') ||
+    pathname.startsWith('/api/posts') ||
+    pathname.startsWith('/api/integrations') ||
+    pathname.includes('/captions') ||
+    (pathname.startsWith('/api/submissions') && request.method !== 'POST')
 
-    if (!token || !secret || token !== secret) {
+  if (isAdminPage || isProtectedApi) {
+    const token = request.cookies.get(ADMIN_COOKIE_NAME)?.value
+    const session = await verifyAdminSessionToken(token)
+
+    if (!session) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
       const loginUrl = new URL('/admin/login', request.url)
       loginUrl.searchParams.set('from', pathname)
       return NextResponse.redirect(loginUrl)
@@ -19,5 +31,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/api/:path*'],
 }
